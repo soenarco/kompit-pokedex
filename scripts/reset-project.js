@@ -1,11 +1,3 @@
-#!/usr/bin/env node
-
-/**
- * This script is used to reset the project to a blank state.
- * It moves the /app directory to /app-example and creates a new /app directory with an index.tsx and _layout.tsx file.
- * You can remove the `reset-project` script from package.json and safely delete this file after running it.
- */
-
 const fs = require('fs');
 const path = require('path');
 
@@ -13,6 +5,8 @@ const root = process.cwd();
 const oldDirPath = path.join(root, 'app');
 const newDirPath = path.join(root, 'app-example');
 const newAppDirPath = path.join(root, 'app');
+const screensDirPath = path.join(newAppDirPath, 'screens');
+const servicesDirPath = path.join(newAppDirPath, 'services');
 
 const indexContent = `import { Text, View } from "react-native";
 
@@ -42,31 +36,77 @@ export default function RootLayout() {
 }
 `;
 
+const homeScreenContent = `import React from 'react';
+import { View, Text } from 'react-native';
+
+export default function HomeScreen() {
+  return (
+    <View>
+      <Text>Welcome to Home Screen</Text>
+    </View>
+  );
+}
+`;
+
+const apiContent = `import { z } from 'zodios';
+
+export const api = {
+  getPokemonList: async () => {
+    // implement API call here
+  },
+  getPokemonDetail: async (name) => {
+    // implement API call here
+  },
+};
+`;
+
 fs.rename(oldDirPath, newDirPath, (error) => {
   if (error) {
     return console.error(`Error renaming directory: ${error}`);
   }
-  console.log('/app moved to /app-example.');
 
   fs.mkdir(newAppDirPath, { recursive: true }, (error) => {
     if (error) {
       return console.error(`Error creating new app directory: ${error}`);
     }
-    console.log('New /app directory created.');
 
     const indexPath = path.join(newAppDirPath, 'index.tsx');
     fs.writeFile(indexPath, indexContent, (error) => {
       if (error) {
         return console.error(`Error creating index.tsx: ${error}`);
       }
-      console.log('app/index.tsx created.');
 
       const layoutPath = path.join(newAppDirPath, '_layout.tsx');
       fs.writeFile(layoutPath, layoutContent, (error) => {
         if (error) {
           return console.error(`Error creating _layout.tsx: ${error}`);
         }
-        console.log('app/_layout.tsx created.');
+
+        fs.mkdir(screensDirPath, { recursive: true }, (error) => {
+          if (error) {
+            return console.error(`Error creating screens directory: ${error}`);
+          }
+
+          const homeScreenPath = path.join(screensDirPath, 'HomeScreen.tsx');
+          fs.writeFile(homeScreenPath, homeScreenContent, (error) => {
+            if (error) {
+              return console.error(`Error creating HomeScreen.tsx: ${error}`);
+            }
+          });
+        });
+
+        fs.mkdir(servicesDirPath, { recursive: true }, (error) => {
+          if (error) {
+            return console.error(`Error creating services directory: ${error}`);
+          }
+
+          const apiPath = path.join(servicesDirPath, 'api.ts');
+          fs.writeFile(apiPath, apiContent, (error) => {
+            if (error) {
+              return console.error(`Error creating api.ts: ${error}`);
+            }
+          });
+        });
       });
     });
   });

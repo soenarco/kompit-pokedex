@@ -1,70 +1,137 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, Image, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import api from '../services/api';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+interface Pokemon {
+  name: string;
+  url: string;
+}
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPokemons();
+    }, [])
+  );
+
+  const fetchPokemons = async () => {
+    try {
+      const data = await api.getPokemonList();
+      setPokemonList(data.results);
+      setFilteredPokemon(data.results);
+    } catch (error) {
+      console.error('Error fetching pokemons:', error);
+    }
+  };
+
+  const handleSearch = (text: string) => {
+    setSearch(text);
+    if (text === '') {
+      setFilteredPokemon(pokemonList);
+    } else {
+      const filtered = pokemonList.filter((pokemon) =>
+        pokemon.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredPokemon(filtered);
+    }
+  };
+
+  const renderPokemonItem = ({ item }: { item: { name: string; url: string } }) => {
+    const pokemonId = item.url.split('/').filter(Boolean).pop();
+    const imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+  
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/${item.name}`)}
+      >
+        <Image source={{ uri: imageUrl }} style={styles.pokemonImage} />
+        <Text style={styles.pokemonName}>{item.name}</Text>
+      </TouchableOpacity>
+    );
+  };
+  
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by name..."
+        value={search}
+        onChangeText={handleSearch}
+      />
+
+      <FlatList
+        data={filteredPokemon}
+        keyExtractor={(item) => item.name}
+        renderItem={renderPokemonItem}
+        numColumns={2}
+        contentContainerStyle={styles.listContent}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    justifyContent: 'space-between',
+  },
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  favoriteIcon: {
+    fontSize: 24,
+  },
+  searchInput: {
+    padding: 20,
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
+  card: {
+    width: 164.42,
+    height: 221, 
+    maxWidth: 164.42,
+    maxHeight: 221, 
+    flex: 1,
+    padding: 10,
+    margin: 15, 
+    borderRadius: 12, 
+    borderWidth: 1,
+    borderColor: '#A8A8A8',
+    alignItems: 'center',
+  },
+  pokemonImage: {
+    width: 148,
+    height: 177,
+    marginBottom: 5,
+  },
+  pokemonName: {
+    fontSize: 16,
+    textTransform: 'capitalize',
+    fontWeight: 600,
   },
 });

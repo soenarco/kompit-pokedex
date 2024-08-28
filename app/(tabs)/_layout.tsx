@@ -1,37 +1,45 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
+import { Stack } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { MdFavoriteBorder } from 'react-icons/md';
 
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function TabsLayout() {
+  const router = useRouter();
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-      }}>
-      <Tabs.Screen
+        headerStyle: {
+          backgroundColor: '#fff',
+        },
+        headerTitleAlign: 'center',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 24,
+        },
+      }}
+    >
+      <Stack.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          title: 'Pokedex',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/favorite');
+              }}
+              style={{ marginRight: 16 }}
+            >
+              <MdFavoriteBorder size={24} color="#000" />
+            </TouchableOpacity>
           ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-          ),
-        }}
+      <Stack.Screen 
+        name="favorite"
+        options={{ title: 'Favorite Pokemon' }}
       />
-    </Tabs>
+    </Stack>
   );
 }
